@@ -1,0 +1,5 @@
+https://zenodo.org/records/8387071
+
+Astrometry.net Solve Command:
+
+solve-field ./image.[jpg/fits/png] --no-plots --new-fits none --solved none --match none --corr none --rdls none --cpulimit 5 --temp-axy --overwrite --downsample 2 --no-remove-lines --uniformize 0 —index-xyls none —keep-xylist none --wcs "none" --corr "none"
