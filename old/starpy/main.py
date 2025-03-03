@@ -9,15 +9,19 @@ from astrometry_handler import run, build_cmd
 def numerical_sort(filename):
     return int(os.path.splitext(filename)[0]) 
 
-images = "./DeepSpaceYoloDataset/images"
+images = "./DeepSpaceYoloDataset/images/"
 image_files = [f for f in os.listdir(images) if f.lower().endswith(('.jpg'))]
 image_files.sort(key=numerical_sort)
-image_files = image_files[:10].copy()
+
+sample_size = 20
+
+image_files = image_files[:sample_size].copy()
+
 #images = "./testdata"
 #image_files = [f for f in os.listdir(images) if f.lower().endswith(('.png'))]
 #image_files.sort()
 
-args = {"limit": str(10), "depth": str(20)}
+args = {"limit": str(2), "depth": str(7)}
 
 def batch():
     results = []
@@ -34,7 +38,7 @@ def batch():
                     solved += 1
                     name = img[img.rfind("/")+1:]
                     image_files.remove(name)
-                results.append(result)
+                    results.append(result)
                 
                 pbar.update(1)
                 pbar.set_description(f"Solved {solved} images")
@@ -42,15 +46,24 @@ def batch():
 
 attempts = 0
 MAX_ATTEMPTS = 5
-depth = 20
+full_results = []
 while attempts < MAX_ATTEMPTS:
     attempts += 1
     print(f"Attempting {len(image_files)} images with limit {args.get("limit")} and d={args.get("depth")}\n")
     res = batch()
-
+    full_results.append(res)
     if len(image_files) == 0:
         break
-    args["limit"] = str(int(args.get("limit")) + 10)
-    args["depth"] = str(int(args.get("depth")) - 3)
+    args["limit"] = str(int(args.get("limit")) + 2)
     
-    time.sleep(5)
+    if attempts % 2 == 0:
+        args["depth"] = str(int(args.get("depth")) + 1)
+    
+    if attempts == 3:
+        print("Enabling downsample")
+        args["downsample"] = "2"
+
+    time.sleep(1)
+
+print(f"Solved {len(full_results)}\n")
+print(full_results)
