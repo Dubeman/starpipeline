@@ -45,7 +45,7 @@ MAX_ATTEMPTS = 5
 depth = 20
 while attempts < MAX_ATTEMPTS:
     attempts += 1
-    print(f"Attempting {len(image_files)} images with limit {args.get("limit")} and d={args.get("depth")}\n")
+    print(f"Attempting {len(image_files)} images with limit {args.get('limit')} and d={args.get('depth')}\n")
     res = batch()
 
     if len(image_files) == 0:
