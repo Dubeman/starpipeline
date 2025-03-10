@@ -2,7 +2,7 @@ const express = require('express');
 const WebSocket = require('ws');
 const fs = require('fs');
 const path = require('path');
-
+// astronmetry.net config homebrew path:  /opt/homebrew/etc/astrometry.cfg
 async function removeAllFiles(folderPath) {
     fs.readdir(folderPath, (err, files) => {
         if (err) {
@@ -76,8 +76,9 @@ wss.on('connection', (ws) => {
                                 
                                 
                                 solveProcess.stdout.on('data', (data) => {
+                                   console.log(data.toString());
                                     if (data.toString().includes("Did not solve")) {
-                                        ws.send(JSON.stringify({ solved: false }))
+                                        ws.send(JSON.stringify({ solved: false }));
                                         console.log("Solve failed");
                                     } else if (data.toString().includes("Field center: (RA H:M:S, Dec D:M:S)")) { // Store result
                                         let coord = data.toString().substring(data.toString().indexOf("Field center: (RA H:M:S, Dec D:M:S)")).split("=")[1];
