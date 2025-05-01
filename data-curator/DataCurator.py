@@ -32,7 +32,7 @@ class DataCurator:
 
     def load_data(self):
         start_time = datetime.now()
-        sample_size = 1000
+        sample_size = 100
         # Specifically target the images directory
         images_path = os.path.join(self.dataset_path, 'images', '*.jpg')  # Add 'images' to path
         self.image_files = glob(images_path)[0:sample_size]

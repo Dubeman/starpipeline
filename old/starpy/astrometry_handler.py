@@ -46,7 +46,8 @@ def build_cmd(image_path, args):
     cmd += build_depth(args.get("depth"))
 
     cmd.append(image_path) # always add image path last
-
+    #for c in cmd:
+    #    print(c, end=" ")
     return cmd
 
 def run(cmd):
@@ -54,12 +55,21 @@ def run(cmd):
         solve = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True
         )
-
+        downsamples = 0
         for line in solve.stdout:
-            #print(line)
+            if "Downsampling" in line:
+                downsamples += 1
+
+            if "log-odds" in line:
+                print(line)
+    
+            if "arcsec/pix" in line:
+                print(line)
+
             if "RA,Dec = (" in line:
                 coords = extract_coordinates(line)
                 if coords is not None:
+                    print("Downsampled by ", downsamples * 2)
                     return [cmd[-1], coords]
         solve.wait()
     except subprocess.CalledProcessError:
@@ -68,13 +78,8 @@ def run(cmd):
 
 def extract_coordinates(line):
     """
-    Extracts the float coordinate pair from a line.
-
-    Args:
-        line (str): A line containing a coordinate pair in the format 'RA,Dec = (x,y)'
-
-    Returns:
-        tuple: A tuple containing the extracted RA and Dec values as floats.
+    Expects line containing a coordinate pair in the format 'RA,Dec = (x,y)'
+    Returns tuple containing the extracted RA and Dec values as floats.
     """
     pattern = r'\((\d+\.\d+),(\d+\.\d+)\)'
     match = re.search(pattern, line)

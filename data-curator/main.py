@@ -31,7 +31,7 @@ def main():
         criterion = torch.nn.MSELoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
-        num_epochs = 50
+        num_epochs = 10
         patience = 5
         best_val_loss = float('inf')
         epochs_no_improvement = 0
@@ -80,23 +80,28 @@ def main():
         
     noisy_imgs, clean_imgs = next(iter(train_loader))
 
-    noisy_img = noisy_imgs[1]
-    clean_img = clean_imgs[1]
-    noisy_img = noisy_img.permute(1, 2, 0).cpu().numpy()
-    clean_img = clean_img.permute(1, 2, 0).cpu().numpy()
+
+    noisy_img = noisy_imgs[0][0, 0, :, :].cpu().numpy()
+    clean_img = clean_imgs[0, 0, :, :].cpu().numpy()
 
     noisy_img = np.clip(noisy_img, 0, 1)
     clean_img = np.clip(clean_img, 0, 1)
 
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+    fig, axes = plt.subplots(1, 3, figsize=(10, 5))
 
-    axes[0].imshow(noisy_img)
+    axes[0].imshow(noisy_img, cmap="gray")
     axes[0].set_title("Noisy Image")
     axes[0].axis('off')
 
-    axes[1].imshow(clean_img)
+    axes[1].imshow(clean_img, cmap="gray")
     axes[1].set_title("Clean Image")
     axes[1].axis('off')
+
+    cleaned = model(noisy_imgs[0].to(device))
+    cleaned_img = cleaned[0, 0, :, :].cpu().detach().numpy()
+    axes[2].imshow(cleaned_img, cmap="gray")
+    axes[2].set_title("Cleaned Image")
+    axes[2].axis('off')
 
     plt.show()
 

@@ -70,7 +70,7 @@ class ImageData:
 
     def load_image(self):
         self.image = cv2.imread(self.image_path)
-        self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
+        self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
         self.image = self.image.astype('float32') / 255.0
         return self.image
 
@@ -127,6 +127,7 @@ class ImageData:
         return f'ImageData(image_path={self.image_path}, label_path={self.label_path}, num_bounding_boxes={len(self.bounding_boxes)})'
 
     def to_tensor(self):
-        noisy_images = [torch.tensor(variation.image, dtype=torch.float32).permute(2, 0, 1) for variation in self.variations]  # List of noisy images (C, H, W)
-        clean_image = torch.tensor(self.image, dtype=torch.float32).permute(2, 0, 1)  # Clean image (C, H, W)
+
+        noisy_images = [torch.tensor(variation.image, dtype=torch.float32).unsqueeze(0) for variation in self.variations]
+        clean_image = torch.tensor(self.image, dtype=torch.float32).unsqueeze(0)
         return noisy_images, clean_image
