@@ -251,8 +251,8 @@ class DataCurationPipeline:
 
 if __name__ == "__main__":
     # Set up paths
-    dataset_path = '/Users/manasdubey2022/Desktop/SWEN 711 RL/starpipeline/old/starpy/DeepSpaceYoloDataset'
-    output_path = './DeepSpaceYoloDatasetNoisy'
+    dataset_path = '/Users/owen/starpipeline/old/starpy/DeepSpaceYoloDataset'
+    output_path = '/Users/owen/starpipeline/star-visualizer/DeepSpaceYoloDatasetNoisy'
 
     # Initialize and run the pipeline
     pipeline = DataCurationPipeline(dataset_path, output_path)
