@@ -7,10 +7,10 @@ models/save/
 logs/
 
 # data
+data/DeepSpaceYoloDataset/
 data/backup/
 data/train/*.h5
 data/train/*.jpg
 data/train/DIV2K/
-data/train/DeepSpaceYoloDataset/
 data/train/DIV2K.zip
 data/valid/*.h5
