@@ -60,42 +60,11 @@ def extract_patches(image, patch_size=63, stride=96):
     
     return np.array(patches)
 
-def generate_training_data(input_dir, output_file, max_size_gb=None, num_patches=None, config=None):
-    """Generate training data with degradations"""
-    # Check available disk space
-    free_space_gb = get_free_space(os.path.dirname(os.path.abspath(output_file)))
-    print(f"Available disk space: {free_space_gb:.2f} GB")
-    
-    if max_size_gb:
-        if max_size_gb > free_space_gb:
-            raise ValueError(f"Requested size ({max_size_gb}GB) exceeds available space ({free_space_gb:.2f}GB)")
-        print(f"Limiting output to {max_size_gb}GB")
-    
-    # Parameters
-    patch_size = 63
-    stride = 96
-    chunk_size = 500  # Reduced chunk size
-    
-    # Use astronomical degradation parameters from config
-    blur_range = config.ASTRO_BLUR_RANGE
-    noise_range = config.ASTRO_NOISE_RANGE
-    jpg_quality_range = config.ASTRO_JPG_QUALITY
-    
-    # Get list of images and estimate total size
-    image_files = [f for f in os.listdir(input_dir) if f.endswith(('.png', '.jpg', '.jpeg'))]
-    est_size_per_img = estimate_size_per_image(patch_size, stride)
-    est_total_size = est_size_per_img * len(image_files)
-    print(f"Estimated total size: {est_total_size:.2f} GB")
-    
-    if max_size_gb:
-        max_images = int(max_size_gb / est_size_per_img)
-        image_files = image_files[:max_images]
-        print(f"Processing {len(image_files)} images to stay within size limit")
-    
-    # Initialize HDF5 file
-    print(f"Creating output file: {output_file}")
+def process_images(image_files, output_file, config, patch_size=63, stride=96, chunk_size=500):
+    total_patches = 0
+    current_batch_degraded = []
+    current_batch_clean = []
     with h5py.File(output_file, 'w') as f:
-        # Create extensible datasets with smaller chunks
         f.create_dataset('data', shape=(0, patch_size, patch_size, 3),
                         maxshape=(None, patch_size, patch_size, 3),
                         chunks=(chunk_size, patch_size, patch_size, 3),
@@ -104,20 +73,10 @@ def generate_training_data(input_dir, output_file, max_size_gb=None, num_patches
                         maxshape=(None, patch_size, patch_size, 3),
                         chunks=(chunk_size, patch_size, patch_size, 3),
                         dtype=np.float32)
-    
-    total_patches = 0
-    current_batch_degraded = []
-    current_batch_clean = []
-    
-    print("Generating training data...")
     for img_file in tqdm(image_files):
         try:
-            # Load image
-            img_path = os.path.join(input_dir, img_file)
-            img = Image.open(img_path).convert('RGB')
+            img = Image.open(img_file).convert('RGB')
             img_np = np.array(img)
-            
-            # Process at different scales
             for scale in range(3):
                 if scale > 0:
                     scale_factor = 2/(scale + 1)
@@ -125,80 +84,66 @@ def generate_training_data(input_dir, output_file, max_size_gb=None, num_patches
                     img_scaled = cv2.resize(img_np, (w, h), interpolation=cv2.INTER_CUBIC)
                 else:
                     img_scaled = img_np
-                
-                # Random degradation parameters
-                blur_sigma = np.random.choice(blur_range)
-                noise_sigma = np.random.choice(noise_range)
-                
-                # Apply degradations
-                degraded = create_degraded_image(img_scaled, blur_sigma, noise_sigma, jpg_quality_range[0])
-                
-                # Extract patches
+                blur_sigma = np.random.choice(config.ASTRO_BLUR_RANGE)
+                noise_sigma = np.random.choice(config.ASTRO_NOISE_RANGE)
+                degraded = create_degraded_image(img_scaled, blur_sigma, noise_sigma, config.ASTRO_JPG_QUALITY[0])
                 clean_patch_batch = extract_patches(img_scaled.astype(np.float32) / 255.0, patch_size, stride)
                 degraded_patch_batch = extract_patches(degraded, patch_size, stride)
-                
                 current_batch_degraded.extend(degraded_patch_batch)
                 current_batch_clean.extend(clean_patch_batch)
-                
-                # Save when batch is full
                 if len(current_batch_degraded) >= chunk_size:
                     with h5py.File(output_file, 'a') as f:
-                        # Convert current batches to arrays
                         degraded_array = np.array(current_batch_degraded)
                         clean_array = np.array(current_batch_clean)
-                        
-                        # Resize datasets
                         f['data'].resize((total_patches + len(degraded_array), patch_size, patch_size, 3))
                         f['label'].resize((total_patches + len(clean_array), patch_size, patch_size, 3))
-                        
-                        # Write data
                         f['data'][total_patches:total_patches + len(degraded_array)] = degraded_array
                         f['label'][total_patches:total_patches + len(clean_array)] = clean_array
-                        
                         total_patches += len(degraded_array)
-                    
-                    # Clear the current batches
                     current_batch_degraded = []
                     current_batch_clean = []
-                
-                if num_patches and total_patches >= num_patches:
-                    break
-            
-            if num_patches and total_patches >= num_patches:
-                break
-                
         except Exception as e:
             print(f"Error processing {img_file}: {str(e)}")
             continue
-    
-    # Save any remaining patches
     if current_batch_degraded:
         with h5py.File(output_file, 'a') as f:
             degraded_array = np.array(current_batch_degraded)
             clean_array = np.array(current_batch_clean)
-            
             f['data'].resize((total_patches + len(degraded_array), patch_size, patch_size, 3))
             f['label'].resize((total_patches + len(clean_array), patch_size, patch_size, 3))
-            
             f['data'][total_patches:total_patches + len(degraded_array)] = degraded_array
             f['label'][total_patches:total_patches + len(clean_array)] = clean_array
-            
             total_patches += len(degraded_array)
-    
     print(f"\nTotal patches generated: {total_patches}")
-    print("Done!")
+    print(f"Saved to {output_file}")
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description='Generate training data for image restoration')
-    parser.add_argument('--input_dir', default='DIV2K', help='Input directory containing images')
-    parser.add_argument('--output_file', default='train.h5', help='Output HDF5 file')
-    parser.add_argument('--num_patches', type=int, default=None, help='Number of patches to generate (optional)')
-    parser.add_argument('--max_size_gb', type=float, default=None, help='Maximum size of output dataset in GB (optional)')
+    parser = argparse.ArgumentParser(description='Generate train/val split for DeepSpaceYoloDataset')
+    parser.add_argument('--input_dir', required=True, help='Input directory containing all images')
+    parser.add_argument('--train_output', default='data/train/star_train.h5', help='Output HDF5 file for training')
+    parser.add_argument('--val_output', default='data/valid/validation.h5', help='Output HDF5 file for validation')
+    parser.add_argument('--val_split', type=float, default=0.2, help='Fraction of images for validation (default 0.2)')
+    parser.add_argument('--max_val_images', type=int, default=None, help='Maximum number of validation images to use')
+    parser.add_argument('--max_train_images', type=int, default=None, help='Maximum number of training images to use')
     args = parser.parse_args()
-    
-    # Create output directory if it doesn't exist
-    os.makedirs(os.path.dirname(os.path.abspath(args.output_file)), exist_ok=True)
-    
+
     config = EnvironmentConfig()
-    generate_training_data(args.input_dir, args.output_file, args.max_size_gb, args.num_patches, config)
+    all_images = [os.path.join(args.input_dir, f) for f in os.listdir(args.input_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    random.shuffle(all_images)
+    val_size = int(len(all_images) * args.val_split)
+    val_images = all_images[:val_size]
+    train_images = all_images[val_size:]
+
+    if args.max_val_images is not None:
+        val_images = val_images[:args.max_val_images]
+    if args.max_train_images is not None:
+        train_images = train_images[:args.max_train_images]
+
+    print(f"Total images: {len(all_images)} | Train: {len(train_images)} | Val: {len(val_images)}")
+    os.makedirs(os.path.dirname(args.train_output), exist_ok=True)
+    os.makedirs(os.path.dirname(args.val_output), exist_ok=True)
+    print("Processing training set...")
+    process_images(train_images, args.train_output, config)
+    print("Processing validation set...")
+    process_images(val_images, args.val_output, config)
