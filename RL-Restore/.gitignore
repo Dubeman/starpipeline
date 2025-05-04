@@ -7,7 +7,7 @@ models/save/
 logs/
 
 # data
-data/DeepSpaceYoloDataset/
+data/DeepSpaceYoloDataset
 data/backup/
 data/train/*.h5
 data/train/*.jpg
