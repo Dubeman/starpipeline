@@ -19,7 +19,7 @@ StarPipeline is an advanced research project that combines multiple AI/ML techni
 
 ### 🛠️ **Core Components**
 - **Astrometry Processing**: Automated plate solving and coordinate system calibration
-- **Image Restoration**: RL-based enhancement for low-quality astronomical images
+- **RL-Restore**: Intelligent restoration toolkit using reinforcement learning
 - **Data Curation**: Intelligent quality assessment and dataset management
 - **Classification System**: Automated star and celestial object identification
 - **Web Visualization**: Modern TypeScript/React interface for results
@@ -42,6 +42,24 @@ StarPipeline/
 ├── RL-Restore/               # Deep RL image restoration system
 └── star-visualizer/          # Modern web interface (Next.js/TypeScript)
 ```
+
+## 🔬 RL-Restore: Reinforcement Learning for Image Restoration
+
+### Technical Implementation
+
+**Dataset**: Generated set of astronomical images with synthetic degradations (Gaussian noise)
+
+**States (s)**: The current corrupted or noisy image (full image or image patch), represented as a tensor or pixel array fed to the agent.
+
+**Actions (a)**: Each action corresponds to applying a specific pre-trained CNN from a restoration toolkit. The agent learns to select and sequence these tools to create an adaptive restoration pipeline.
+
+### Restoration Toolkit Actions:
+- **Tool 1 & 2**: General-purpose CNNs for feature extraction and coarse restoration
+- **Tool 3-8**: Restoration-focused CNNs with 64 filters for denoising and deblurring
+- **Tool 9**: Fine-detail preservation using smaller 9×9 kernels
+- **Tool 11 & 12**: Specialized CNNs tuned for space-based noise and distortions
+
+The RL agent learns to adaptively select and sequence these restoration tools to maximize image quality for astronomical data.
 
 ## 🔧 Installation
 
@@ -81,7 +99,7 @@ StarPipeline/
 
 ### Image Restoration with Reinforcement Learning
 ```python
-# RL-based image restoration
+# RL-based adaptive restoration using the restoration toolkit
 cd RL-Restore
 python main.py --input_image path/to/image.fits --output_dir results/
 ```
@@ -119,14 +137,16 @@ This pipeline has been developed for:
 ## 🔬 Technical Innovation
 
 ### Reinforcement Learning for Astronomy
-- Novel application of DQN for astronomical image restoration
+- Novel application of DQN for astronomical image restoration using a diverse CNN toolkit
 - PPO-based parameter optimization for capture settings
-- Adaptive quality assessment using learned policies
+- Adaptive tool selection for different types of astronomical image degradations
+- State-action formulation specifically designed for astronomical imaging challenges
 
 ### Computer Vision Integration
 - Multi-scale feature extraction for celestial objects
 - Automated star field analysis and classification
 - Intelligent noise reduction and enhancement
+- Specialized handling of space-based distortions and artifacts
 
 ### Full-Stack Implementation
 - Python-based ML pipeline for computational efficiency
@@ -140,6 +160,17 @@ This pipeline has been developed for:
 - **Restoration Quality**: Significant SNR improvement on low-quality images
 - **Automation**: Fully automated pipeline with minimal human intervention
 
+## 🙏 Acknowledgments
+
+### RL-Restore Component
+Special recognition to the RL-Restore project for the innovative reinforcement learning approach to astronomical image restoration. The system's ability to adaptively select from a toolkit of specialized CNNs represents a significant advancement in automated image processing for astronomy.
+
+### Technical Contributions
+- **Dataset Creation**: Synthetic degradation methodology for astronomical image training
+- **RL Framework**: State-action formulation for image restoration tasks
+- **CNN Toolkit**: Specialized restoration tools for different astronomical artifacts
+- **Integration**: Seamless pipeline combining multiple AI/ML techniques
+
 ## 🤝 Contributing
 
 This is an active research project. Contributions are welcome in:
@@ -152,12 +183,6 @@ This is an active research project. Contributions are welcome in:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
-
-- Developed in collaboration with research teams in computational astronomy
-- Built upon state-of-the-art ML frameworks and astronomical libraries
-- Incorporates best practices from both computer science and astronomy domains
-
 ## 📞 Contact
 
 **Manas Dubey**  
@@ -166,4 +191,4 @@ GitHub: [@Dubeman](https://github.com/Dubeman)
 
 ---
 
-*StarPipeline represents the intersection of artificial intelligence and astronomical research, demonstrating how modern ML techniques can revolutionize traditional scientific workflows.*
+*StarPipeline represents the intersection of artificial intelligence and astronomical research, demonstrating how modern ML techniques can revolutionize traditional scientific workflows. The RL-Restore component showcases innovative applications of reinforcement learning to domain-specific challenges in astronomical imaging.*
